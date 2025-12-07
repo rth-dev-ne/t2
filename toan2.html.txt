@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="vi">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cân Bằng Chiếc Cân</title>
+  <script src="/_sdk/element_sdk.js"></script>
+  <style>
+    body {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      overflow: hidden;
+    }
+
+    html {
+      height: 100%;
+      width: 100%;
+    }
+
+    .game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+      position: relative;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      max-width: 1200px;
+      margin-bottom: 20px;
+    }
+
+    .game-title {
+      font-size: 42px;
+      font-weight: bold;
+      color: white;
+      text-align: center;
+      text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+      flex: 1;
+    }
+
+    .score-board {
+      background: rgba(255, 255, 255, 0.3);
+      padding: 12px 25px;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      position: absolute;
+      top: 20px;
+      right: 20px;
+    }
+
+    .score-text {
+      font-size: 22px;
+      font-weight: bold;
+      color: white;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      margin: 0;
+    }
+
+    .score-number {
+      font-size: 32px;
+      color: #FFD700;
+    }
+
+    .reset-button {
+      background: rgba(255, 100, 100, 0.9);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+      position: absolute;
+      top: 20px;
+      left: 20px;
+    }
+
+    .reset-button:hover {
+      background: rgba(255, 80, 80, 1);
+      transform: scale(1.05);
+    }
+
+    .weight-table {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 15px;
+      border-radius: 15px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      position: absolute;
+      top: 90px;
+      left: 20px;
+      max-width: 250px;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .weight-table h3 {
+      margin: 0 0 10px 0;
+      color: #764ba2;
+      font-size: 16px;
+    }
+
+    .weight-table div {
+      color: #333;
+      margin: 5px 0;
+    }
+
+    .scale-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 900px;
+      position: relative;
+      margin: 40px 0;
+    }
+
+    .scale {
+      width: 100%;
+      max-width: 700px;
+      height: 300px;
+      position: relative;
+      transition: transform 0.5s ease;
+    }
+
+    .scale-base {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px;
+      height: 120px;
+      background: linear-gradient(180deg, #8B4513 0%, #654321 100%);
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .scale-beam {
+      position: absolute;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      height: 12px;
+      background: linear-gradient(90deg, #C0C0C0 0%, #A9A9A9 100%);
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      transition: transform 0.5s ease;
+      transform-origin: center;
+    }
+
+    .scale-pan {
+      position: absolute;
+      bottom: 30px;
+      width: 200px;
+      height: 150px;
+      background: rgba(255, 255, 255, 0.3);
+      border: 3px solid rgba(255, 255, 255, 0.6);
+      border-radius: 15px;
+      backdrop-filter: blur(5px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+      transition: all 0.5s ease;
+      display: flex;
+      flex-wrap: wrap;
+      align-content: flex-start;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .scale-pan-left {
+      left: 50px;
+    }
+
+    .scale-pan-right {
+      right: 50px;
+    }
+
+    .item {
+      font-size: 40px;
+      cursor: grab;
+      transition: all 0.2s ease;
+      user-select: none;
+      touch-action: none;
+      position: relative;
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .item:hover {
+      transform: scale(1.15);
+    }
+
+    .item:active {
+      cursor: grabbing;
+    }
+
+    .item.disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      filter: grayscale(1);
+    }
+
+    .item.disabled:hover {
+      transform: scale(1);
+    }
+
+    .item-clone {
+      font-size: 40px;
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.8;
+    }
+
+    .item-bar {
+      display: flex;
+      gap: 15px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 90%;
+    }
+
+    .message {
+      font-size: 28px;
+      color: white;
+      text-align: center;
+      margin: 15px 0;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      min-height: 40px;
+      font-weight: bold;
+    }
+
+    .confetti-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10000;
+      overflow: hidden;
+    }
+
+    .confetti {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      background: #FFD700;
+      animation: confettiFall 3s linear forwards;
+    }
+
+    @keyframes confettiFall {
+      0% {
+        transform: translateY(-100%) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(100%) rotate(720deg);
+        opacity: 0;
+      }
+    }
+
+    .celebration-text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 64px;
+      font-weight: bold;
+      color: #FFD700;
+      text-shadow: 4px 4px 8px rgba(0,0,0,0.5);
+      z-index: 10001;
+      pointer-events: none;
+      animation: celebrationPop 1.2s ease-out forwards;
+    }
+
+    @keyframes celebrationPop {
+      0% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+      }
+      50% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 1;
+      }
+      100% {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .game-title {
+        font-size: 28px;
+      }
+
+      .weight-table {
+        font-size: 11px;
+        max-width: 180px;
+        padding: 10px;
+        top: 70px;
+      }
+
+      .scale-pan {
+        width: 140px;
+        height: 120px;
+      }
+
+      .item {
+        font-size: 30px;
+        width: 40px;
+        height: 40px;
+      }
+
+      .message {
+        font-size: 20px;
+      }
+    }
+  </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="https://cdn.tailwindcss.com" type="text/javascript"></script>
+ </head>
+ <body>
+  <main class="game-container">
+   <div class="header">
+    <h1 class="game-title" id="gameTitle">⚖️ CÂN BẰNG CHIẾC CÂN</h1>
+   </div><button class="reset-button" id="resetButton">🔄 LÀM LẠI</button>
+   <div class="score-board">
+    <p class="score-text">Điểm: <span class="score-number" id="scoreDisplay">0</span></p>
+   </div>
+   <div class="weight-table">
+    <h3>📊 Bảng Trọng Lượng</h3>
+    <div>
+     🍎 = 2 ✏️
+    </div>
+    <div>
+     🍌 = 🍎 + 🧼
+    </div>
+    <div>
+     📓 = 3 🍎
+    </div>
+    <div>
+     📕 = 📓 + ✏️
+    </div>
+    <div>
+     🧱 = 2 📓
+    </div>
+    <div>
+     2 🧼 = ✏️
+    </div>
+   </div>
+   <div class="scale-container">
+    <div class="scale" id="scale">
+     <div class="scale-base"></div>
+     <div class="scale-beam" id="scaleBeam"></div>
+     <div class="scale-pan scale-pan-left" id="leftPan"></div>
+     <div class="scale-pan scale-pan-right" id="rightPan"></div>
+    </div>
+   </div>
+   <p class="message" id="message"></p>
+   <div class="item-bar" id="itemBar">
+    <div class="item" data-type="apple" draggable="false">
+     🍎
+    </div>
+    <div class="item" data-type="pen" draggable="false">
+     ✏️
+    </div>
+    <div class="item" data-type="banana" draggable="false">
+     🍌
+    </div>
+    <div class="item" data-type="eraser" draggable="false">
+     🧼
+    </div>
+    <div class="item" data-type="notebook" draggable="false">
+     📓
+    </div>
+    <div class="item" data-type="book" draggable="false">
+     📕
+    </div>
+    <div class="item" data-type="brick" draggable="false">
+     🧱
+    </div>
+   </div>
+  </main>
+  <div class="confetti-container" id="confettiContainer"></div>
+  <script>
+    const defaultConfig = {
+      game_title: "⚖️ CÂN BẰNG CHIẾC CÂN",
+      reset_button_text: "🔄 LÀM LẠI"
+    };
+
+    // Weight system (in pen units)
+    const weights = {
+      pen: 1,
+      eraser: 0.5,
+      apple: 2,
+      banana: 2.5,
+      notebook: 6,
+      book: 7,
+      brick: 12
+    };
+
+    const itemEmojis = {
+      apple: '🍎',
+      pen: '✏️',
+      banana: '🍌',
+      eraser: '🧼',
+      notebook: '📓',
+      book: '📕',
+      brick: '🧱'
+    };
+
+    const congratulations = [
+      "Tuyệt lắm!",
+      "Bạn cân giỏi quá!",
+      "Chuẩn chỉnh luôn!",
+      "Hoàn hảo!",
+      "Tài giỏi quá đi!",
+      "Xuất sắc!"
+    ];
+
+    let score = 0;
+    let leftItems = [];
+    let rightItems = [];
+    let draggedElement = null;
+    let cloneElement = null;
+    let isBalanced = false;
+
+    function updateScore() {
+      document.getElementById('scoreDisplay').textContent = score;
+    }
+
+    function calculateWeight(items) {
+      return items.reduce((sum, item) => sum + weights[item], 0);
+    }
+
+    function checkBalance() {
+      const leftWeight = calculateWeight(leftItems);
+      const rightWeight = calculateWeight(rightItems);
+      const difference = leftWeight - rightWeight;
+
+      const scaleBeam = document.getElementById('scaleBeam');
+      const leftPan = document.getElementById('leftPan');
+      const rightPan = document.getElementById('rightPan');
+
+      if (Math.abs(difference) < 0.01) {
+        // Balanced!
+        scaleBeam.style.transform = 'translateX(-50%) rotate(0deg)';
+        leftPan.style.transform = 'translateY(0)';
+        rightPan.style.transform = 'translateY(0)';
+        
+        if (!isBalanced) {
+          isBalanced = true;
+          score++;
+          updateScore();
+          showCelebration();
+          
+          setTimeout(() => {
+            nextRound();
+          }, 1500);
+        }
+      } else {
+        isBalanced = false;
+        const angle = Math.min(Math.max(difference * 2, -15), 15);
+        scaleBeam.style.transform = `translateX(-50%) rotate(${angle}deg)`;
+        leftPan.style.transform = `translateY(${angle * 2}px)`;
+        rightPan.style.transform = `translateY(${-angle * 2}px)`;
+        
+        if (rightItems.length > 0) {
+          document.getElementById('message').textContent = "Chưa đúng rồi, thử lại nhé!";
+        } else {
+          document.getElementById('message').textContent = "";
+        }
+      }
+    }
+
+    function showCelebration() {
+      const message = congratulations[Math.floor(Math.random() * congratulations.length)];
+      document.getElementById('message').textContent = message;
+
+      const celebrationText = document.createElement('div');
+      celebrationText.className = 'celebration-text';
+      celebrationText.textContent = `🎉 ${message}`;
+      document.body.appendChild(celebrationText);
+
+      setTimeout(() => {
+        celebrationText.remove();
+      }, 1200);
+
+      const confettiContainer = document.getElementById('confettiContainer');
+      const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE'];
+
+      for (let i = 0; i < 40; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.animationDelay = Math.random() * 0.3 + 's';
+        confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
+        confettiContainer.appendChild(confetti);
+
+        setTimeout(() => {
+          confetti.remove();
+        }, 3000);
+      }
+    }
+
+    function renderPan(panId, items) {
+      const pan = document.getElementById(panId);
+      const existingItems = pan.querySelectorAll('.item');
+      existingItems.forEach(item => item.remove());
+
+      items.forEach((itemType, index) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'item';
+        itemDiv.textContent = itemEmojis[itemType];
+        itemDiv.dataset.type = itemType;
+        itemDiv.dataset.index = index;
+        
+        // Random position within pan
+        const randomX = Math.random() * 10 - 5;
+        const randomY = Math.random() * 10 - 5;
+        itemDiv.style.transform = `translate(${randomX}px, ${randomY}px)`;
+        
+        if (panId === 'rightPan') {
+          itemDiv.style.cursor = 'pointer';
+          itemDiv.addEventListener('click', () => removeFromRight(index));
+        }
+        
+        pan.appendChild(itemDiv);
+      });
+    }
+
+    function removeFromRight(index) {
+      rightItems.splice(index, 1);
+      renderPan('rightPan', rightItems);
+      checkBalance();
+    }
+
+    function updateItemBar() {
+      const itemBar = document.getElementById('itemBar');
+      const allItems = itemBar.querySelectorAll('.item');
+      
+      // Count items on left side
+      const leftItemCounts = {};
+      leftItems.forEach(item => {
+        leftItemCounts[item] = (leftItemCounts[item] || 0) + 1;
+      });
+      
+      // Update each item in the bar
+      allItems.forEach(itemEl => {
+        const itemType = itemEl.dataset.type;
+        const countOnLeft = leftItemCounts[itemType] || 0;
+        
+        // If item appears 2+ times on left, disable 1-2 of them in the bar
+        if (countOnLeft >= 2) {
+          const disableCount = Math.min(countOnLeft - 1, 2);
+          if (Math.random() < disableCount / 2) {
+            itemEl.classList.add('disabled');
+          } else {
+            itemEl.classList.remove('disabled');
+          }
+        } else if (countOnLeft === 1) {
+          // 30% chance to disable if appears once
+          if (Math.random() < 0.3) {
+            itemEl.classList.add('disabled');
+          } else {
+            itemEl.classList.remove('disabled');
+          }
+        } else {
+          itemEl.classList.remove('disabled');
+        }
+      });
+    }
+
+    function nextRound() {
+      leftItems = [];
+      rightItems = [];
+      isBalanced = false;
+
+      // Generate random left side items
+      const itemTypes = Object.keys(weights);
+      const numItems = Math.floor(Math.random() * 3) + 1; // 1-3 items
+
+      for (let i = 0; i < numItems; i++) {
+        const randomItem = itemTypes[Math.floor(Math.random() * itemTypes.length)];
+        leftItems.push(randomItem);
+      }
+
+      renderPan('leftPan', leftItems);
+      renderPan('rightPan', rightItems);
+      updateItemBar();
+      checkBalance();
+      document.getElementById('message').textContent = "";
+    }
+
+    function resetRound() {
+      rightItems = [];
+      renderPan('rightPan', rightItems);
+      updateItemBar();
+      checkBalance();
+    }
+
+    function startDrag(e) {
+      e.preventDefault();
+
+      let target = e.target;
+      while (target && !target.classList.contains('item')) {
+        target = target.parentElement;
+      }
+
+      if (!target || !target.dataset.type || target.classList.contains('disabled')) return;
+
+      draggedElement = target;
+
+      cloneElement = document.createElement('div');
+      cloneElement.className = 'item-clone';
+      cloneElement.textContent = target.textContent;
+      document.body.appendChild(cloneElement);
+
+      const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+      cloneElement.style.left = (clientX - 20) + 'px';
+      cloneElement.style.top = (clientY - 20) + 'px';
+
+      document.addEventListener('mousemove', drag);
+      document.addEventListener('mouseup', endDrag);
+      document.addEventListener('touchmove', drag);
+      document.addEventListener('touchend', endDrag);
+    }
+
+    function drag(e) {
+      if (!cloneElement) return;
+
+      const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+      const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+      cloneElement.style.left = (clientX - 20) + 'px';
+      cloneElement.style.top = (clientY - 20) + 'px';
+    }
+
+    function endDrag(e) {
+      if (!cloneElement || !draggedElement) return;
+
+      document.removeEventListener('mousemove', drag);
+      document.removeEventListener('mouseup', endDrag);
+      document.removeEventListener('touchmove', drag);
+      document.removeEventListener('touchend', endDrag);
+
+      const clientX = e.type === 'touchend' ? e.changedTouches[0].clientX : e.clientX;
+      const clientY = e.type === 'touchend' ? e.changedTouches[0].clientY : e.clientY;
+
+      const rightPan = document.getElementById('rightPan');
+      const panRect = rightPan.getBoundingClientRect();
+
+      if (
+        clientX >= panRect.left &&
+        clientX <= panRect.right &&
+        clientY >= panRect.top &&
+        clientY <= panRect.bottom
+      ) {
+        rightItems.push(draggedElement.dataset.type);
+        renderPan('rightPan', rightItems);
+        checkBalance();
+      }
+
+      cloneElement.remove();
+      cloneElement = null;
+      draggedElement = null;
+    }
+
+    // Event listeners
+    document.getElementById('itemBar').addEventListener('mousedown', startDrag);
+    document.getElementById('itemBar').addEventListener('touchstart', startDrag);
+
+    document.getElementById('resetButton').addEventListener('click', resetRound);
+
+    // Element SDK Integration
+    async function onConfigChange(config) {
+      const title = config.game_title || defaultConfig.game_title;
+      const resetText = config.reset_button_text || defaultConfig.reset_button_text;
+
+      document.getElementById('gameTitle').textContent = title;
+      document.getElementById('resetButton').textContent = resetText;
+    }
+
+    if (window.elementSdk) {
+      window.elementSdk.init({
+        defaultConfig: defaultConfig,
+        onConfigChange: onConfigChange,
+        mapToCapabilities: (config) => ({
+          recolorables: [],
+          borderables: [],
+          fontEditable: undefined,
+          fontSizeable: undefined
+        }),
+        mapToEditPanelValues: (config) => new Map([
+          ["game_title", config.game_title || defaultConfig.game_title],
+          ["reset_button_text", config.reset_button_text || defaultConfig.reset_button_text]
+        ])
+      });
+    }
+
+    // Start game
+    nextRound();
+    updateScore();
+  </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9aa39595d5f0337f',t:'MTc2NTEwNTkwOC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
